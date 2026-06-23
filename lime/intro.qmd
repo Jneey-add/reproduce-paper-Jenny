@@ -1,32 +1,16 @@
-# Introduction
-
-This is a book created from markdown and executable code.
-
-See @knuth84 for additional discussion of literate programming.
+---
+title: "Lime Recommendation Formulas"
+---
 
 ```{r}
----
-title: "Lime_recommendation_formulas"
-output: 
-  rmarkdown::html_vignette:
-    toc: true
-    toc_depth: 2
-    fig_caption: yes
-vignette: >
-  %\VignetteIndexEntry{Lime_recommendation_formulas}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
+#| label: setup
+#| message: false
+#| warning: false
 
-```{r include=FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
-```{r setup}
 library(limer)
+load("date/kamp.RData")
+load("date/coch.RData")
+load("date/linc.RData")
 ```
 
 This vignette provides a review of lime recommendation formulas and their usage. The review focuses on formulas for tropical acid soils that can be used in *ex-ante* analyses, with readily available soil data, and without additional soil tests.

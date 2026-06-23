@@ -1,0 +1,6 @@
+_book/
+_bookdown_files/
+*_files/
+.Rhistory
+.RData
+renv/
