@@ -1,0 +1,25 @@
+project:
+  type: book
+
+book:
+  title: "1"
+  author: "Norah Jones"
+  date: "2026/5/26"
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - summary.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+  pdf:
+    documentclass: scrreprt
+
+
+

@@ -3,3 +3,243 @@
 This is a book created from markdown and executable code.
 
 See @knuth84 for additional discussion of literate programming.
+
+```{r}
+ncpdata <- read.csv ("disstance-enhanced.csv", header = T, sep = ",")
+head(ncpdata)
+pdf(file="cp-cp-en.pdf", width= 7, height=7)
+hist(ncpdata$distance,  breaks = 75, col = "#C2DCBF",  freq = T, xlab = "Distance between adjacent CPs",ylab = "Number of CPs",xlim=c(0,20000),ylim=c(0,1500))
+lines(density(ncpdata$distance), col="black",lwd=2)
+rug(jitter(ncpdata$distance))
+dev.off()
+
+ncpdata <- read.csv ("disstance-cp.csv", header = T, sep = ",")
+head(ncpdata)
+pdf(file="cp-cp-cp.pdf", width= 7, height=7)
+hist(ncpdata$distance,  breaks = 75, col = "#FBE5B8",  freq = T, xlab = "",ylab = "",xlim=c(0,20000),ylim=c(0,700),main="",cex.axis = 1.5)
+
+
+lines(density(ncpdata$distance), col="black",lwd=2)
+mtext("Distance between adjacent CPs", side = 1, line = 2.5, cex = 2)  # X轴标题 
+mtext("Number of CPs", side = 2, line =2.5, cex = 2)  # Y轴标题
+rug(jitter(ncpdata$distance))
+
+dev.off()
+
+
+
+
+ncpdata <- read.csv ("disstance-specific.csv", header = T, sep = ",")
+head(ncpdata)
+pdf(file="cp-cp-sp.pdf", width= 7, height=7)
+hist(ncpdata$distance,  breaks = 75, col = "#FBE5B8",  freq = T, xlab = "Distance from TSS (Kb)",xlim=c(0,20000),ylim=c(0,1500))
+lines(density(ncpdata$distance), col="black",lwd=2)
+rug(jitter(ncpdata$distance))
+dev.off()
+```
+```{r}
+library(ggplot2)
+library(hrbrthemes)
+library(ggsci)
+
+#-------------------------------------------------------------------------------
+#cp2cp cp2N
+data <- read.table("./density1.txt",header = T,check.names = F)
+
+ggplot(data=data, aes(x=R,fill=Class,color=Class)) +
+  geom_density(adjust=1.5, alpha=0.5,lwd=0.5,linetype = 1) +
+  theme_bw()+theme(panel.grid=element_blank())
+
+#-------------------------------------------------------------------------------
+#cp2cp cp2p
+#cp2cp cp2N
+data <- read.table("./density2.txt",header = T,check.names = F)
+
+ggplot(data=data, aes(x=R,fill=Class,color=Class)) +
+  geom_density(adjust=1.5, alpha=0.5,lwd=0.5,linetype = 1) +
+  theme_bw()+theme(panel.grid=element_blank())
+
+
+#-------------------------------------------------------------------------------
+#box plot
+
+
+data_box <- read.table("Boxplot.txt",header = T,check.names = F)
+
+p1 <- ggplot(data_box,aes(x=D,y=R,fill=G))+
+  geom_boxplot(width=0.6,alpha=0.8,notch = TRUE)+
+  theme_bw()+theme(panel.grid=element_blank())+
+  scale_y_continuous(limits = c(-0.5, 1),breaks = seq(-0.5,1,0.5))
+p1
+
+
+#-------------------------------------------------------------------------------
+#KEGG Enrich
+
+remotes::install_github("YuLab-SMU/createKEGGdb")
+createKEGGdb::create_kegg_db('zma')
+
+file="KEGG_cp2n.txt"
+
+sn=gsub(".txt","",file)
+gene <- read.delim(file,header = T,row.names = 1)
+kk <- enrichKEGG(gene= gene$GenBank.Gene,organism= 'zma',
+                 pvalueCutoff = 0.743,
+                 qvalueCutoff = 1,
+                 use_internal_data =T)
+head(kk)
+write.csv(kk@result,file = paste0(sn,".pathway.csv"),row.names = F)
+##只展示过阈值的pathway
+kkp <- enrichKEGG(gene= gene$GenBank.Gene,organism= 'zma',qvalueCutoff = 0.1,use_internal_data =T)
+head(kkp)
+p=dotplot(kk);p
+ggsave(p,filename = paste0(sn,".pathway.png"),width = 8,height = 7,dpi = 300)
+ggsave(p,filename = paste0(sn,".pathway.pdf"),width = 8,height = 7,dpi = 300)
+
+
+```
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)  # 使用readr代替readxl因为您的文件是CSV
+
+# 读取CSV文件
+data1 <- read_csv("disstance-en-spe.csv")
+
+pdf("disstance-en-spe.pdf",width=5,height=4)
+p <- ggplot(data1, aes(value, fill=variable)) +
+  geom_histogram(data = filter(data1, variable == 'enhanced'),
+                 aes(y = after_stat(count)), 
+                 binwidth = 30) +
+  geom_histogram(data = filter(data1, variable == 'specific'),
+                 aes(y = -after_stat(count)), 
+                 binwidth = 30) +
+  scale_x_continuous(limits = c(0, 8000),
+                     breaks = c(0, 2000, 4000, 6000, 8000),
+                     expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-100, 100),
+                     breaks = seq(-100, 100, 20),
+                     labels = abs(seq(-100, 100, 20))) +
+  scale_fill_manual(values = c('enhanced' = '#88c4e8', 'specific' = '#db6968')) +
+  labs(x = 'Distance between adjacent CPs', y = 'Number of CPs') +
+  theme_classic(base_size = 15) +
+  theme(#panel.border = element_rect(linewidth = 1, fill='transparent'),
+        legend.position = 'none',
+        axis.text = element_text(colour = 'black'),
+        axis.text.x = element_text(angle = 45, hjust = 1),  # 调整标签角度
+        axis.title.x = element_text(size = 16, color = "black"),  # 设置X轴标题的字体大小和颜色
+                      axis.title.y = element_text(size = 16, color = "black")) +  # 设置Y轴标题的字体大小和颜色
+  #geom_vline(xintercept = 2000, linetype = 2, linewidth = 1) +
+  #annotate('text', x = 9000, y = 70,
+           #label = round(median(filter(data1, variable == 'enhanced')$value), digits = 2),
+          # size = 4, color = '#88c4e8') +
+  #annotate('text', x = 9000, y = -70,
+           #label = round(median(filter(data1, variable == 'specific')$value), digits = 2),
+          # size = 4, color = '#db6968') +
+  annotate('text', x = 6000, y = 90,
+           label = 'Tissue enhanced CPs',
+           size = 6, color = '#88c4e8') +
+  annotate('text', x = 6000, y = -90,
+           label = 'Tissue specific CPs',
+           size = 6, color = '#db6968')
+print(p) 
+
+# 保存图形为PDF文件 
+dev.off()
+```
+```{r}
+library("pheatmap")
+library("RColorBrewer")
+library("dplyr")
+
+data <- read.csv(file="cp_tf.csv",
+                 header=T)
+df1 <- data[!duplicated(data),]
+head(df1)
+rownames(df1) <- df1[,1]
+df2 <- df1[,-1]
+head(df2)
+
+
+data1 <- df2[,c(4:16)]
+
+# 热图A
+pheatmap(data1,scale='row',show_rownames = F,
+         color=colorRampPalette(c("black","#EEE53B"))(100),
+         cluster_rows = F, cluster_cols = F,
+         legend=F,
+         fontsize_col=12,
+         )
+
+
+# # 热图B
+# 
+data_B <- read.csv(file="cp_tf_p.csv",
+                   header=T,row.name=1)
+data_B1 <- data_B[,c(1:13)]
+# 
+pheatmap(data_B1,show_rownames = T,
+         # scale='row',
+         color=colorRampPalette(c("white","red"))(100),
+         cluster_rows = F, cluster_cols = F,
+         border_color = 'black',
+         legend=T,
+         legend_breaks = NA,
+         legend_labels = "-log10 P-value",
+         fontsize_col=12,
+         cellwidth = 10, cellheight = 8
+         )
+
+# 热图C
+
+data_C <- read.csv(file="cp_tf_avg.csv",
+                   header=T,row.name=1)
+data_C1 <- data_C[,c(1:13)]
+
+pheatmap(data_C1,show_rownames = T,
+         scale='row',
+         color=colorRampPalette(c("blue","white","red"))(100),
+         cluster_rows = F, cluster_cols = F,
+         border_color = 'black',
+         legend=T,
+         fontsize_col=12,
+         cellwidth = 10,cellheight = 8,
+         )
+```
+```{r}
+cpdata <- read.csv ("frequency.csv", header = T, sep = ",")
+head(ncpdata)
+pdf(file="dp-ncp-wm.pdf", width= 7, height=7)
+hist(cpdata$MH.,  breaks = 40, col = "steelblue",  freq = T, xlab = "Molecular weight (Da)")
+lines(density(cpdata$MH.), col="black",lwd=2)
+rug(jitter(cpdata$MH.))
+dev.off()
+
+
+
+ncpdata <- read.csv ("frequency.csv", header = T, sep = ",")
+head(ncpdata)
+pdf(file="dp-ncp-len.pdf", width= 7, height=7)
+hist(ncpdata$Length,  breaks = 40, col = "#5fb360",  freq = T, xlab = "Peptide length (amino acid)")
+lines(density(ncpdata$Length), col="black",lwd=2)
+rug(jitter(ncpdata$Length))
+dev.off()
+
+cpdata <- read.csv ("frequency.csv", header = T, sep = ",")
+head(ncpdata)
+pdf(file="dp-ncp-wm.pdf", width= 7, height=7)
+hist(cpdata$MH.,  breaks = 40, col = "steelblue",  freq = T, xlab = "Molecular weight (Da)",xlim=c(500,5000))
+lines(density(cpdata$MH.), col="black",lwd=2)
+rug(jitter(cpdata$MH.))
+dev.off()
+
+
+
+ncpdata <- read.csv ("frequency.csv", header = T, sep = ",")
+head(ncpdata)
+pdf(file="dp-ncp-len.pdf", width= 7, height=7)
+hist(ncpdata$Length,  breaks = 40, col = "#5fb360",  freq = T, xlab = "Peptide length (amino acid)",xlim=c(5,50))
+lines(density(ncpdata$Length), col="black",lwd=2)
+rug(jitter(ncpdata$Length))
+dev.off()
+```
